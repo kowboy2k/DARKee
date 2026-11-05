@@ -62,6 +62,8 @@ The interface is in French.
 > DARKee is not affiliated with Google or the Wikimedia Foundation. Google, Gmail and Chrome are trademarks of Google LLC;
 > Wikipedia is a trademark of the Wikimedia Foundation.
 
+---
+
 ## 🇫🇷 Enfin.
 
 <p align="center"><img src="docs/demo-fr.svg" alt="DARKee : démonstration animée" width="900"></p>
