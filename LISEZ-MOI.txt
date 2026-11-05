@@ -1,0 +1,19 @@
+DARKee : extension Chrome / Chrome extension
+
+=== FRANÇAIS : installer DARKee dans Chrome ===
+1. Ranger ce dossier « DARKee » dans un endroit où il ne bougera plus (par exemple Documents).
+   Chrome le relit à chaque démarrage : il ne faut pas le supprimer.
+2. Dans Chrome, taper  chrome://extensions  dans la barre d'adresse, puis Entrée.
+3. En haut à droite, allumer l'interrupteur « Mode développeur ».
+4. Cliquer sur « Charger l'extension non empaquetée », choisir ce dossier « DARKee », puis « Sélectionner un dossier ».
+5. Cliquer sur la pièce de puzzle en haut à droite de Chrome, puis sur la punaise à côté de DARKee. C'est prêt !
+
+=== ENGLISH: install DARKee in Chrome ===
+1. Put this "DARKee" folder somewhere it will stay (Documents, for example).
+   Chrome reads it at every start: don't delete it.
+2. In Chrome, type  chrome://extensions  in the address bar and press Enter.
+3. Top right, switch on "Developer mode".
+4. Click "Load unpacked", pick this "DARKee" folder, then "Select Folder".
+5. Click the puzzle piece at the top right of Chrome, then the pin next to DARKee. Done!
+
+https://github.com/kowboy2k/DARKee

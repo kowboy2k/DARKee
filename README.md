@@ -1,4 +1,4 @@
-# DARKee
+# DARKee · extension Chrome / Chrome extension
 
 **🇫🇷 Français · 🇬🇧 English** (scroll down / plus bas)
 
@@ -44,10 +44,19 @@ DARKee ne fait **aucune requête réseau**. Rien n'est envoyé, nulle part. Pour
 Autorisations : stockage, scripts sur Google et Wikipédia, et `geolocation` seulement si vous cliquez sur
 « Me localiser ». L'accès aux autres sites n'est demandé que si vous l'activez, un site à la fois ou tous.
 
-### Installation
-1. Télécharger le dernier `DARKee-x.y.z.zip` dans les [Releases](../../releases), puis le décompresser.
-2. Ouvrir `chrome://extensions`, activer le **Mode développeur** (en haut à droite).
-3. Cliquer sur **Charger l'extension non empaquetée** et choisir le dossier décompressé.
+### Installer DARKee dans Chrome (2 minutes)
+DARKee n'est pas (encore) sur le Chrome Web Store : on l'installe à la main, c'est simple.
+
+1. **Télécharger** : ouvrir [la dernière version](../../releases/latest) et cliquer sur le fichier `DARKee-x.y.z.zip`.
+2. **Décompresser** : clic droit sur le fichier téléchargé › **Extraire tout…** › **Extraire** (sur Mac : double-clic).
+   Un dossier `DARKee` apparaît. Le ranger dans un endroit où il ne bougera plus (par exemple Documents) :
+   Chrome le relit à chaque démarrage, il ne faut pas le supprimer.
+3. **Ouvrir les extensions** : taper `chrome://extensions` dans la barre d'adresse de Chrome, puis Entrée.
+4. **Mode développeur** : en haut à droite de cette page, allumer l'interrupteur **Mode développeur**.
+5. **Charger** : cliquer sur **Charger l'extension non empaquetée** (en haut à gauche), choisir le dossier `DARKee`, puis **Sélectionner un dossier**.
+6. **Épingler** : cliquer sur la pièce de puzzle 🧩 en haut à droite de Chrome, puis sur la punaise 📌 à côté de DARKee. C'est prêt !
+
+**Mettre à jour** : télécharger la nouvelle version, remplacer le contenu du dossier `DARKee`, puis cliquer sur la flèche ↻ de DARKee dans `chrome://extensions`.
 
 Interface en français.
 
@@ -95,10 +104,19 @@ built-in list of cities, offline.
 Permissions: storage, scripts on Google and Wikipedia, and `geolocation` only if you click "Locate me". Access to
 other sites is only requested when you turn it on, one site at a time or all of them.
 
-### Install
-1. Download the latest `DARKee-x.y.z.zip` from [Releases](../../releases) and unzip it.
-2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-3. Click **Load unpacked** and pick the unzipped folder.
+### Install DARKee in Chrome (2 minutes)
+DARKee is not on the Chrome Web Store (yet): you install it by hand, it's easy.
+
+1. **Download**: open [the latest release](../../releases/latest) and click the `DARKee-x.y.z.zip` file.
+2. **Unzip**: right-click the downloaded file › **Extract All…** › **Extract** (on a Mac: double-click).
+   A `DARKee` folder appears. Put it somewhere it will stay (Documents, for example):
+   Chrome reads it at every start, so don't delete it.
+3. **Open extensions**: type `chrome://extensions` in Chrome's address bar and press Enter.
+4. **Developer mode**: top right of that page, switch on **Developer mode**.
+5. **Load**: click **Load unpacked** (top left), pick the `DARKee` folder, then **Select Folder**.
+6. **Pin it**: click the puzzle piece 🧩 at the top right of Chrome, then the pin 📌 next to DARKee. Done!
+
+**Update**: download the new version, replace the content of the `DARKee` folder, then click DARKee's ↻ arrow in `chrome://extensions`.
 
 The interface is in French.
 
