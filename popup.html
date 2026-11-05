@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>DARKee</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Bloc fixe en haut : titre, ligne d'état, OFF | Actif | Auto -->
+  <div class="pinned">
+    <header class="top">
+      <div class="brand">
+        <h1>DARKee</h1>
+        <span class="version" id="version"></span>
+      </div>
+      <nav class="views" aria-label="Vues">
+        <button type="button" class="view" data-tab="sites" title="Sites" aria-label="Sites">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 5h10M7.5 10h10M7.5 15h10"/><circle cx="3.6" cy="5" r="1.1"/><circle cx="3.6" cy="10" r="1.1"/><circle cx="3.6" cy="15" r="1.1"/></svg>
+          Sites
+        </button>
+        <button type="button" class="view" data-tab="more" title="Plus d'options" aria-label="Plus d'options">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.6 2.5h2.8l.4 2.1 1.5.9 2-.8 1.4 2.4-1.6 1.4v1.8l1.6 1.4-1.4 2.4-2-.8-1.5.9-.4 2.1H8.6l-.4-2.1-1.5-.9-2 .8-1.4-2.4 1.6-1.4V9.1L3.3 7.7l1.4-2.4 2 .8 1.5-.9z"/><circle cx="10" cy="10" r="2.4"/></svg>
+          Plus
+        </button>
+      </nav>
+    </header>
+    <p class="status paused" id="status">&nbsp;</p>
+    <div class="power-row">
+      <div class="top-cell">
+        <button type="button" class="power-btn" id="powerBtn" aria-pressed="true" aria-describedby="powerLabel" title="Allumer ou éteindre DARKee (éteint : rien n'est modifié)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8v6.4"/><path d="M6 5.3a6.2 6.2 0 1 0 8 0"/></svg>
+        </button>
+        <span class="top-cap" id="powerLabel">ON</span>
+      </div>
+      <div class="top-cell">
+        <button type="button" class="default-btn" id="defaultBtn" aria-pressed="false" aria-describedby="defaultLabel"
+          title="Activé : tous les sites passent en sombre, sauf ceux que tu coupes · Désactivé : seulement ceux que tu allumes">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path class="fill" d="M15.6 12.9A7 7 0 0 1 7.1 4.4a7 7 0 1 0 8.5 8.5z"/><path class="spark" d="M14.5 2.5v3M13 4h3M17.5 7v2M16.5 8h2"/></svg>
+        </button>
+        <span class="top-cap" id="defaultLabel">Actif par défaut</span>
+      </div>
+      <div class="top-cell">
+        <div class="split" id="autoSplit">
+          <button type="button" class="auto-btn" id="autoBtn" aria-pressed="false" aria-describedby="autoLabel"
+            title="Mode automatique : sombre selon le thème de l'OS et/ou une plage horaire">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.6 2"/></svg>
+          </button>
+          <button type="button" class="auto-drop" id="autoFold" aria-expanded="true" aria-controls="autoPanel" title="Afficher ou masquer les réglages Auto">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
+          </button>
+        </div>
+        <span class="top-cap" id="autoLabel">Auto OFF</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="autobox" id="autoPanel" hidden>
+    <div class="auto-body" id="autoBody">
+    <label class="auto-row">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="10" rx="1.8"/><path d="M7 16.5h6"/><path class="fill" d="M10 5.8a2.7 2.7 0 0 0 0 5.4z"/><path d="M10 5.8a2.7 2.7 0 0 1 0 5.4"/></svg>
+      <span class="auto-text"><b>Selon thème OS</b><small>Quand le système est en apparence sombre</small></span>
+      <span class="switch"><input type="checkbox" id="bySystem"><span></span></span>
+    </label>
+    <label class="auto-row">
+      <svg viewBox="0 0 20 20" aria-hidden="true" class="sun"><path d="M2.5 14.5h15M5.5 17h9"/><path class="fill" d="M5.5 14.5a4.5 4.5 0 0 1 9 0z"/><path d="M10 2.5v4.2M7.9 4.8 10 6.9l2.1-2.1M3.6 8.8l1.3 1.1M16.4 8.8l-1.3 1.1"/></svg>
+      <span class="auto-text"><b>Selon plage</b><small>Selon la plage solaire ou une plage horaire</small></span>
+      <span class="switch"><input type="checkbox" id="bySchedule"><span></span></span>
+    </label>
+
+    <div class="auto-sched" id="scheduleFields">
+      <div class="seg seg-sm" id="scheduleType" role="group" aria-label="Type d'horaire">
+        <button type="button" data-type="sun">Plage solaire</button>
+        <button type="button" data-type="hours">Plage horaire</button>
+      </div>
+      <div id="sunPlace" class="kv">
+        <span class="k">Lieu</span>
+        <span class="v" id="position">Inconnu</span>
+        <button type="button" class="icon-btn" id="locate" title="Me localiser" aria-label="Me localiser">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10a6 6 0 1 1-1.8-4.3"/><path d="M16.2 3.2v3.6h-3.6"/></svg>
+        </button>
+      </div>
+      <div id="hourFields" class="kv">
+        <span class="k">De</span><input type="time" id="from"><span class="k to">à</span><input type="time" id="to">
+      </div>
+      <p class="tl-ends" id="scheduleInfo"><span id="infoLeft"></span><span id="infoRight"></span></p>
+      <div class="timeline" aria-hidden="true">
+        <div class="tl-bar"><i class="tl-night" id="tlA"></i><i class="tl-night" id="tlB"></i><i class="tl-now" id="tlNow"></i></div>
+        <div class="tl-labels"><span>0 h</span><span>6 h</span><span>12 h</span><span>18 h</span><span>24 h</span></div>
+      </div>
+      <!-- Réglage de la fin (lever) et du début (coucher) de la période sombre, par pas de 15 min -->
+      <div id="sunFields">
+        <div class="kv">
+          <span class="k">Lever</span>
+          <span class="stepper">
+            <button type="button" class="step wide" data-field="offsetRise" data-delta="-15" aria-label="Finir 15 minutes plus tôt">− 15 min</button>
+            <output id="offsetRiseOut"></output>
+            <button type="button" class="step wide" data-field="offsetRise" data-delta="15" aria-label="Finir 15 minutes plus tard">+ 15 min</button>
+          </span>
+        </div>
+        <div class="kv">
+          <span class="k">Coucher</span>
+          <span class="stepper">
+            <button type="button" class="step wide" data-field="offset" data-delta="15" aria-label="Commencer 15 minutes plus tôt">− 15 min</button>
+            <output id="offsetOut"></output>
+            <button type="button" class="step wide" data-field="offset" data-delta="-15" aria-label="Commencer 15 minutes plus tard">+ 15 min</button>
+          </span>
+        </div>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <div class="site-card" id="siteCard">
+    <div class="site-row">
+      <button type="button" class="site-text" id="customBtn" aria-pressed="false">
+        <b id="siteName">—</b>
+        <small><span class="mention" id="siteHost"></span><span class="ask" id="customAsk"></span></small>
+      </button>
+      <div class="switch-wrap">
+        <button type="button" class="moon-switch" id="siteToggle" role="switch" aria-checked="false" title="Allumer ou couper le thème sombre sur ce site">
+          <span class="knob" aria-hidden="true"></span>
+        </button>
+        <span class="switch-level" id="siteLevel"></span>
+      </div>
+    </div>
+  </div>
+  <div class="perm" id="perm" hidden>
+    <span>Autorise DARKee ici pour que ce choix tienne après un rechargement.</span>
+    <div class="perm-actions">
+      <button type="button" class="pill" id="permSite">Ce site</button>
+      <button type="button" class="pill" id="permAll">Tous les sites</button>
+    </div>
+  </div>
+
+  <section class="panel" id="tab-settings" role="tabpanel">
+    <div class="row scope">
+      <span class="scope-label" id="scopeLabel">Réglages communs à tous les sites</span>
+      <button type="button" class="link" id="reset">Réinitialiser</button>
+    </div>
+    <p class="note" id="nativeNote" hidden>Wikipédia utilise son propre thème sombre. Ces réglages ne servent qu'en mode « Filtre réglable » (onglet Plus).</p>
+
+    <div class="presets" id="presets"></div>
+
+    <div class="field" id="engineRow">
+      <span class="field-label">Rendu sur ce site</span>
+      <div class="seg" id="engine" role="group" aria-label="Moteur de rendu">
+        <button type="button" data-engine="css" title="Inverse la page, filtre simple. Pour Docs, Sheets, Slides">Compatible</button>
+        <button type="button" data-engine="svg" title="Inverse la page, couleurs exactes du thème. Si Recolorer s'affiche mal">Précis</button>
+        <button type="button" data-engine="recolor" title="Assombrit le clair, garde le sombre, sans toucher aux images. Recommandé">Recolorer</button>
+      </div>
+    </div>
+
+    <div class="field" id="imageField">
+      <span class="field-label">Images</span>
+      <div class="seg" id="imageMode" role="group" aria-label="Images">
+        <button type="button" data-mode="dim" title="Vraies couleurs, un peu assombries (par défaut)">Assombrir</button>
+        <button type="button" data-mode="keep" title="Images intactes">Normales</button>
+      </div>
+    </div>
+
+    <div id="sliders"></div>
+
+    <div class="colors">
+      <label>Fond <input type="color" id="bg"></label>
+      <label>Texte <input type="color" id="fg"></label>
+    </div>
+
+    <div class="site-tools" id="siteTools">
+      <button type="button" class="pick-btn" id="pickBtn" title="Cliquer ensuite sur un élément de la page pour lui donner un autre aspect">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><circle cx="10" cy="10" r="2"/><path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3"/></svg>
+        Choisir un élément
+      </button>
+      <span class="rules-info" id="rulesInfo"></span>
+      <button type="button" class="link" id="rulesClear" hidden>Effacer</button>
+    </div>
+  </section>
+
+  <section class="panel" id="tab-sites" role="tabpanel" hidden>
+    <h2>Autres sites</h2>
+    <div class="row line">
+      <span id="accessText">Accès à tous les sites : non</span>
+      <button type="button" class="link" id="accessAll">Autoriser</button>
+    </div>
+
+    <input type="search" class="site-search" id="siteSearch" placeholder="Rechercher un site…" aria-label="Rechercher un site" autocomplete="off">
+
+    <details class="fold big" id="googleFold">
+      <summary>Google et Wikipédia<span class="count" id="googleCount"></span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></summary>
+      <div class="row fold-tools">
+        <span class="note legend"><span class="bar-legend" aria-hidden="true"></span> Barre de titre sombre pour web app</span>
+        <div class="links">
+          <button type="button" class="link" id="allOn">Tout activer</button>
+          <button type="button" class="link" id="allOff">Tout couper</button>
+        </div>
+      </div>
+      <ul class="sites" id="sites"></ul>
+    </details>
+
+    <div class="row sep-row">
+      <span class="field-label">Autres sites enregistrés</span>
+      <button type="button" class="link danger" id="wipeSites" title="Oublie tous les sites enregistrés ci-dessous (allumé / coupé, personnalisation, éléments choisis, domaine)">Supprimer tous les sites</button>
+    </div>
+    <ul class="sites" id="hosts"></ul>
+    <p class="note" id="hostsEmpty">Sur n'importe quel site, clique sur le gros bouton du haut ou utilise le raccourci « Ce site » : le choix est mémorisé ici.</p>
+    <p class="note" id="searchEmpty" hidden>Aucun site ne correspond.</p>
+  </section>
+
+  <section class="panel" id="tab-more" role="tabpanel" hidden>
+    <label class="feature" id="cookieCard" title="Clique « Tout refuser » (ou l'équivalent) dans les bandeaux de cookies, jamais « Accepter » ni un refus payant. Sur tous les sites autorisés.">
+      <svg class="feature-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12.4A8.5 8.5 0 1 1 11.6 3.5a3 3 0 0 0 3.6 3.6 3 3 0 0 0 3.6 3.6 3 3 0 0 0 1.7 1.7z"/><circle class="dot" cx="8.5" cy="10" r="1.2"/><circle class="dot" cx="13" cy="15" r="1.2"/><circle class="dot" cx="8.8" cy="15.6" r="1"/><path class="no" d="M4 20 20 4"/></svg>
+      <span class="feature-text"><b>Anti-cookies</b><small>Rejette automatiquement les demandes de cookies</small></span>
+      <span class="switch"><input type="checkbox" id="cookieReject"><span></span></span>
+    </label>
+
+    <h2>Ce site</h2>
+    <p class="note" id="moreNoSite">Ouvre un site Google ou Wikipédia pour régler ces options.</p>
+    <label class="check" id="detectRow">
+      <input type="checkbox" id="hereDetect"> Laisser tel quel si le site est déjà sombre
+    </label>
+    <label class="check" id="titleBarRow">
+      <input type="checkbox" id="hereTitleBar"> Barre de titre sombre (web app)
+    </label>
+
+    <h2>Wikipédia</h2>
+    <div class="seg" id="wikiMode" role="group" aria-label="Mode Wikipédia">
+      <button type="button" data-mode="native">Thème sombre de Wikipédia</button>
+      <button type="button" data-mode="filter">Filtre réglable</button>
+    </div>
+
+    <h2>Raccourcis clavier</h2>
+    <button type="button" class="shortcut" data-command="toggle-all">
+      <span>Activer / désactiver partout</span><kbd>—</kbd>
+    </button>
+    <button type="button" class="shortcut" data-command="toggle-site">
+      <span>Activer / désactiver sur ce site</span><kbd>—</kbd>
+    </button>
+    <p class="note">Le choix fait pour un site est mémorisé. Clique sur un raccourci pour le changer.</p>
+
+    <h2>Confidentialité</h2>
+    <p class="note">Aucune connexion réseau, aucune donnée envoyée : tout reste dans ce navigateur.</p>
+  </section>
+
+
+
+  <script src="sites.js"></script>
+  <script src="villes.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
