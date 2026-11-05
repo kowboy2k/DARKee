@@ -123,6 +123,13 @@ The interface is in French.
 > DARKee is not affiliated with Google or the Wikimedia Foundation. Google, Gmail and Chrome are trademarks of Google LLC;
 > Wikipedia is a trademark of the Wikimedia Foundation.
 
+## ☕ Soutenir mon travail · Support my work
+
+🇫🇷 Tout est gratuit, et le restera. Si DARKee vous rend service, un café sur Ko-fi m'aide à continuer.
+🇬🇧 Everything is free, and will stay free. If DARKee helps you, a coffee on Ko-fi helps me keep going.
+
+<p align="center"><a href="https://ko-fi.com/kowboy2k"><img src="https://img.shields.io/badge/Ko--fi-Offrir%20un%20caf%C3%A9%20%C2%B7%20Buy%20me%20a%20coffee-FF5E5B?logo=ko-fi&logoColor=white&style=for-the-badge" alt="Ko-fi : offrir un café / buy me a coffee"></a></p>
+
 ---
 
 Licence **GPL-3.0** : libre, et ses copies le restent aussi. · **GPL-3.0** licence: free, and so are its copies.
