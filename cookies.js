@@ -17,6 +17,7 @@
     '#axeptio_btn_dismiss', // Axeptio
     '#cookiescript_reject', // CookieScript
     '.cky-btn-reject', // CookieYes
+    '.cky-banner-btn-close', // CookieYes sans bouton de refus (ko-fi.com) : la croix enregistre un refus
     '.cmplz-deny', // Complianz
     '.osano-cm-denyAll', // Osano
     '.iubenda-cs-reject-btn', // iubenda
