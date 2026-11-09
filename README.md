@@ -40,7 +40,7 @@ No network requests. No data sent. No ads. Free. Open source.
 ### Privacy
 DARKee makes **no network requests**. Nothing is sent, anywhere. To name your city (for sun times) it uses a
 built-in list of cities, offline.
-Permissions: storage, scripts on Google and Wikipedia, and `geolocation` only if you click "Locate me". Access to
+Permissions: storage, alarms (a version check every 30 s, only when loaded unpacked), scripts on Google and Wikipedia, and `geolocation` only if you click "Locate me". Access to
 other sites is only requested when you turn it on, one site at a time or all of them.
 
 ### Install DARKee in Chrome (2 minutes)
@@ -101,7 +101,7 @@ Aucune requête réseau. Aucune donnée envoyée. Sans pub. Gratuit. Libre.
 ### Vie privée
 DARKee ne fait **aucune requête réseau**. Rien n'est envoyé, nulle part. Pour trouver le nom de votre ville
 (heures du soleil), il utilise une liste de villes intégrée, sans connexion.
-Autorisations : stockage, scripts sur Google et Wikipédia, et `geolocation` seulement si vous cliquez sur
+Autorisations : stockage, alarmes (contrôle de version toutes les 30 s, seulement en non empaquetée), scripts sur Google et Wikipédia, et `geolocation` seulement si vous cliquez sur
 « Me localiser ». L'accès aux autres sites n'est demandé que si vous l'activez, un site à la fois ou tous.
 
 ### Installer DARKee dans Chrome (2 minutes)

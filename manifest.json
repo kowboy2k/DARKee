@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DARKee",
-  "version": "1.20.8",
+  "version": "1.20.9",
   "description": "Thème sombre réglable pour Google, Wikipédia et tout site que vous choisissez. Aucune connexion réseau, aucune donnée envoyée.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -13,7 +13,8 @@
     "storage",
     "scripting",
     "activeTab",
-    "geolocation"
+    "geolocation",
+    "alarms"
   ],
   "host_permissions": [
     "*://*.google.com/*",

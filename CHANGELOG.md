@@ -3,7 +3,7 @@
 Thème sombre réglable pour les services Google (Gmail, Agenda, Docs, Sheets, Slides, Forms, Drive,
 Traduction, Keep, Contacts, Recherche, Maps, Photos, Meet, autres) et pour Wikipédia.
 
-- Aucune requête réseau, aucune télémétrie. Permissions : `storage`, `scripting`, `activeTab`, `geolocation` (seulement si vous cliquez « Me localiser »), accès à Google et Wikipédia ;
+- Aucune requête réseau, aucune télémétrie. Permissions : `storage`, `scripting`, `activeTab`, `alarms` (contrôle de version en non empaquetée), `geolocation` (seulement si vous cliquez « Me localiser »), accès à Google et Wikipédia ;
   l'accès aux autres sites n'est demandé que si vous l'activez (un site à la fois, ou tous).
 - Google : filtre de couleur SVG sur la page (fond, texte, luminosité, contraste, saturation, teinte),
   les photos et vidéos sont rétablies dans leurs vraies couleurs.
@@ -29,6 +29,7 @@ Ne pas garder en parallèle « gmail-titlebar-sombre » ni d'autres extensions d
   Option « Laisser tel quel si le site est déjà sombre » par site (cochée par défaut).
 
 ## Versions
+- **1.20.9** – Chargée depuis un dossier (non empaquetée), l'extension se recharge d'elle-même quand une nouvelle version arrive sur le disque (synchro PC ↔ Mac) ; permission `alarms` pour ce contrôle toutes les 30 s.
 - **1.20.8** – « Inactif par défaut » : croissant bleuté sur le bouton.
 - **1.20.7** – Interrupteur « Toujours ON » : sans étoile (piste jaune seule).
 - **1.20.6** – Bouton « Actif / Inactif par défaut » : croissant seul, sans les étoiles.

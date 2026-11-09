@@ -1,5 +1,5 @@
 // DARKee – raccourcis clavier et injection sur les sites autorisés en plus de Google et Wikipédia.
-importScripts('sites.js');
+importScripts('sites.js', 'rechargement.js');
 
 const OTHER_SCRIPTS = 'dark-google-other-sites';
 
