@@ -5,6 +5,7 @@
 #   siteoff : pas de contour, croissant bleu → « Actif par défaut », page coupée
 #   idleon  : contour bleuté #5972c6, croissant jaune → « Inactif par défaut », page (ou domaine) allumée
 #   idle    : contour bleuté #5972c6, croissant bleu → « Inactif par défaut », page pas allumée
+#   …star   : (onstar, idleonstar) petite étoile jaune en haut à droite → sombre et personnalisé ici
 # icon-*.png (icône principale de l'extension) = état « on ».
 import os
 import struct
@@ -21,6 +22,28 @@ STATES = {
     'idleon': {'bg': DARK, 'moon': YELLOW, 'ring': RING},
     'idle': {'bg': DARK, 'moon': BLUE, 'ring': RING},
 }
+STATES['onstar'] = {**STATES['on'], 'star': True}
+STATES['idleonstar'] = {**STATES['idleon'], 'star': True}
+
+import math
+
+
+def in_star(px, py, cx, cy, r_out, r_in):
+    # Étoile à 5 branches, pointe en haut.
+    dx, dy = px - cx, py - cy
+    d = math.hypot(dx, dy)
+    if d > r_out:
+        return False
+    a = (math.atan2(dx, -dy) % (2 * math.pi)) / (2 * math.pi / 10)
+    k, f = int(a), a - int(a)
+    r1, r2 = (r_out, r_in) if k % 2 == 0 else (r_in, r_out)
+    # rayon de la bordure entre deux sommets (interpolation sur la ligne droite entre eux)
+    t0, t1 = k * math.pi / 5, (k + 1) * math.pi / 5
+    x1, y1 = r1 * math.sin(t0), -r1 * math.cos(t0)
+    x2, y2 = r2 * math.sin(t1), -r2 * math.cos(t1)
+    # côté du segment où se trouve le point (même côté que le centre = dedans)
+    cross = lambda ax, ay, bx, by, qx, qy: (bx - ax) * (qy - ay) - (by - ay) * (qx - ax)
+    return cross(x1, y1, x2, y2, dx, dy) * cross(x1, y1, x2, y2, 0, 0) >= 0
 SIZES = (16, 32, 48, 128)
 
 
@@ -30,7 +53,16 @@ def inside_rounded(px, py, inset=0.0, radius=0.22):
     return (px - cx) ** 2 + (py - cy) ** 2 <= radius ** 2
 
 
+STAR = (0.80, 0.21, 0.205, 0.09)  # centre x, y, rayon extérieur, intérieur
+
+
 def colour_at(px, py, st, n):
+    if st.get('star'):
+        cx, cy, ro, ri = STAR
+        if in_star(px, py, cx, cy, ro, ri):
+            return YELLOW
+        if in_star(px, py, cx, cy, ro + 0.07, ri + 0.04):
+            return (20, 20, 22)  # liseré sombre : l'étoile se détache du croissant et du contour
     if not inside_rounded(px, py):
         return None
     if (px - 0.5) ** 2 + (py - 0.5) ** 2 < 0.30 ** 2 and not (px - 0.63) ** 2 + (py - 0.40) ** 2 < 0.25 ** 2:

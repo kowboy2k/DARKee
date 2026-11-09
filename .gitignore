@@ -1,3 +1,7 @@
 .DS_Store
 Thumbs.db
 *.zip
+# Journal personnel des instructions (règle de Kev) : jamais commité
+CLAUDE - instructions*.txt
+# Dossiers personnels / sous licence
+\#*/

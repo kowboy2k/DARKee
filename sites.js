@@ -90,7 +90,7 @@ var DG = (() => {
   }
 
   function isDomainWide(state, site) {
-    if (site.other) return !!state.hosts[site.domain]?.wholeDomain;
+    if (site.other) return true; // toujours tout le domaine
     return !!site.group && SITES.some((x) => x.group === site.group && state.sites[x.id].wholeDomain);
   }
 
@@ -124,6 +124,7 @@ var DG = (() => {
     detect: true,
     engine: site.engine || (site.other ? 'recolor' : 'svg'),
     custom: null,
+    always: false,
   });
 
   // Réglages d'un site ; « create » les ajoute à l'état pour pouvoir les modifier.
@@ -133,10 +134,10 @@ var DG = (() => {
       const leader = site.group && SITES.find((x) => x.group === site.group && state.sites[x.id].wholeDomain);
       return state.sites[(leader || site).id];
     }
-    if (state.hosts[site.domain]?.wholeDomain) return state.hosts[site.domain];
-    if (state.hosts[site.host]) return state.hosts[site.host];
+    // Autres sites : un seul réglage pour tout le domaine (caf.fr vaut pour connect.caf.fr, www.caf.fr…).
+    if (state.hosts[site.domain]) return state.hosts[site.domain];
     const d = siteDefaults(state, site);
-    if (create) state.hosts[site.host] = d;
+    if (create) state.hosts[site.domain] = d;
     return d;
   }
 
@@ -155,7 +156,21 @@ var DG = (() => {
   }
 
   function setSiteOn(state, site, on) {
-    conf(state, site, true).enabled = on;
+    const c = conf(state, site, true);
+    c.enabled = on;
+    if (!on) c.always = false;
+  }
+
+  // Interrupteur du site : 0 OFF · 1 ON · 2 Toujours (sombre même quand Auto rendrait la page claire).
+  function siteLevel(state, site) {
+    if (!siteOn(state, site)) return 0;
+    return conf(state, site).always ? 2 : 1;
+  }
+
+  function setSiteLevel(state, site, level) {
+    const c = conf(state, site, true);
+    c.enabled = level > 0;
+    c.always = level === 2;
   }
 
   // Icône de la barre d'outils : le contour dit le mode (bleuté : « Inactif par défaut », aucun : « Actif par
@@ -163,9 +178,11 @@ var DG = (() => {
   function iconKind(state, site) {
     if (state.mode === 'off') return 'off';
     const on = site ? siteOn(state, site) : state.scope === 'all';
-    // Contour bleuté : « Inactif par défaut » ; croissant jaune : la page (ou son domaine) est sombre, bleu : coupée.
-    if (state.scope === 'site') return on ? 'idleon' : 'idle';
-    return on ? 'on' : 'siteoff';
+    // Étoile jaune dans le coin : sombre et personnalisé ici (réglages propres, ou « Toujours ON »).
+    const star = on && site && (conf(state, site).custom || conf(state, site).always) ? 'star' : '';
+    // Contour bleuté : « Inactif par défaut » ; croissant jaune : la page (son domaine) est sombre, bleu : coupée.
+    if (state.scope === 'site') return on ? 'idleon' + star : 'idle';
+    return on ? 'on' + star : 'siteoff';
   }
 
   // Complète un état enregistré (éventuellement ancien ou vide) avec les valeurs par défaut.
@@ -190,7 +207,10 @@ var DG = (() => {
       wikiMode: state.wikiMode === 'filter' ? 'filter' : 'native',
       // Anti-cookies : refuser automatiquement les demandes de cookies (cookies.js).
       cookieReject: state.cookieReject !== false,
-      global: clean(state.global),
+      // 1.20.1 : les réglages par défaut sont Graphite en variante 0 (Classique) ; ceux modifiés avant la 1.20 (quand
+      // faire défiler les variantes changeait les réglages communs) y reviennent une fois.
+      global: state.defaultsGraphite ? clean(state.global) : clean(null),
+      defaultsGraphite: true,
       sites: {},
       hosts: {},
     };
@@ -204,6 +224,7 @@ var DG = (() => {
         detect: saved.detect !== false,
         engine: ['svg', 'css', 'recolor'].includes(saved.engine) ? saved.engine : s.engine || 'svg',
         custom: saved.custom ? clean(saved.custom) : null,
+        always: saved.always === true,
         wholeDomain: saved.wholeDomain === true,
         rules: cleanRules(saved.rules),
       };
@@ -212,8 +233,16 @@ var DG = (() => {
     // par défaut. Ces entrées sans autre réglage ne sont pas des choix : on les oublie une fois.
     out.allSitesDefault = true;
     out.recolorDefault = true;
-    for (const [host, saved] of Object.entries(state.hosts || {})) {
+    // 1.20 : un réglage par domaine. Une ancienne entrée par adresse (connect.caf.fr) passe sur son domaine (caf.fr),
+    // sauf si le domaine a déjà la sienne (réglée « tout le domaine » : elle prime).
+    // Ordre de préférence : réglée « tout le domaine », puis le domaine lui-même, puis celle qui a une
+    // personnalisation ou des éléments choisis.
+    const rank = ([k, v]) => (v.wholeDomain === true) * 4 + (k === baseDomain(k)) * 2 + !!(v.custom || (v.rules || []).length);
+    const entries = Object.entries(state.hosts || {}).sort((x, y) => rank(y) - rank(x));
+    for (const [key, saved] of entries) {
       if (!state.allSitesDefault && saved.enabled !== true && !saved.picked && !saved.custom && !saved.wholeDomain && !(saved.rules || []).length) continue;
+      const host = baseDomain(key);
+      if (out.hosts[host]) continue;
       out.hosts[host] = {
         enabled: saved.picked === true || saved.enabled !== false, // « picked » : ancienne version de « Par site »
         titleBar: saved.titleBar !== false,
@@ -221,7 +250,8 @@ var DG = (() => {
         // 1.17 : « Compatible », réglage par défaut jusque-là, passe une fois à « Recolorer ».
         engine: saved.engine === 'svg' ? 'svg' : saved.engine === 'recolor' || !state.recolorDefault ? 'recolor' : 'css',
         custom: saved.custom ? clean(saved.custom) : null,
-        wholeDomain: saved.wholeDomain === true,
+        always: saved.always === true,
+        wholeDomain: true,
         rules: cleanRules(saved.rules),
       };
     }
@@ -232,9 +262,10 @@ var DG = (() => {
   function effective(state, site) {
     const s = conf(state, site);
     return {
-      // Site personnalisé : il garde son thème même en OFF ou quand le mode Auto est en pause.
-      on: state.mode !== 'off' && siteOn(state, site), // OFF éteint tout, sites personnalisés compris
-      auto: state.mode === 'auto' && !s.custom,
+      on: state.mode !== 'off' && siteOn(state, site), // OFF éteint tout
+      // « Toujours » : sombre même quand le mode Auto rendrait la page claire.
+      auto: state.mode === 'auto' && !s.always,
+      always: !!s.always,
       custom: !!s.custom,
       rules: s.rules || [],
       siteOff: state.scope === 'all' && !s.enabled && state.mode !== 'off', // coupé ici alors que tout est sombre : une exception
@@ -455,6 +486,6 @@ var DG = (() => {
     SITES, DEFAULT_PARAMS, PRESETS, VARIANTS, BUILT_IN_MATCHES,
     siteFor, siteForUrl, otherSite, conf, normalize, effective, matrices, cssFilters,
     domainOf, isDomainWide, setDomainWide, siteOn, setSiteOn, iconKind,
-    nightWindow, isNight,
+    nightWindow, isNight, siteLevel, setSiteLevel,
   };
 })();

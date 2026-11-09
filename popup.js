@@ -39,8 +39,10 @@ async function init() {
 // ---- Variantes des thèmes (sites personnalisés) : traitement des éléments qui ressortent ----
 
 const isCustom = () => !!(site && DG.conf(state, site).custom);
-// Cran de l'interrupteur du site : 0 coupé · 1 ce site · 2 tout le domaine.
-const siteLevel = () => (!site || !DG.siteOn(state, site) ? 0 : DG.domainOf(site) && DG.isDomainWide(state, site) ? 2 : 1);
+// Cran de l'interrupteur du site : 0 OFF · 1 ON · 2 Toujours.
+const siteLevel = () => (site ? DG.siteLevel(state, site) : 0);
+// Nom affiché d'un site : son domaine pour les autres sites (un réglage vaut pour tout le domaine).
+const siteName = (x) => (x.other ? x.domain : x.label);
 const sameValues = (v, p) => Object.keys(v).every((k) => String(v[k]).toLowerCase() === String(p[k]).toLowerCase());
 
 // Réglages du site ouvert (créés au besoin pour un site hors Google).
@@ -48,9 +50,27 @@ function here() {
   return DG.conf(state, site, true);
 }
 
-// Les réglages en cours d'édition : ceux du site s'il en a, sinon les réglages communs.
+// Les réglages affichés : ceux du site s'il en a, sinon les réglages par défaut.
 function params() {
   return (site && here().custom) || state.global;
+}
+
+// Les réglages à modifier : toucher au thème, à la variante ou à un réglage sur un site en fait une préférence de
+// ce site (personnalisé). Hors site (page non gérée), ce sont les réglages par défaut.
+function edit() {
+  if (!site) return state.global;
+  const c = here();
+  if (!c.custom) c.custom = { ...state.global };
+  return c.custom;
+}
+
+// Revenu exactement aux réglages par défaut : plus rien à retenir pour ce site.
+function dropDefaultCustom() {
+  if (!site) return;
+  const c = DG.conf(state, site);
+  if (c.custom && Object.keys(DG.DEFAULT_PARAMS).every((k) => String(c.custom[k]).toLowerCase() === String(state.global[k]).toLowerCase())) {
+    c.custom = null;
+  }
 }
 
 // ---- Autorisations pour les sites hors Google / Wikipédia ----
@@ -60,14 +80,14 @@ const originOf = (h) => `*://*.${h}/*`;
 async function refreshAccess() {
   try {
     access.all = await chrome.permissions.contains({ origins: ['<all_urls>'] });
-    access.site = !site?.other || access.all || (await chrome.permissions.contains({ origins: [originOf(site.host)] }));
+    access.site = !site?.other || access.all || (await chrome.permissions.contains({ origins: [originOf(site.domain)] }));
   } catch {}
 }
 
 // Doit être appelé directement depuis un clic (Chrome l'exige pour afficher sa demande).
 async function askAccess(all) {
   try {
-    await chrome.permissions.request({ origins: [all ? '<all_urls>' : originOf(site.host)] });
+    await chrome.permissions.request({ origins: [all ? '<all_urls>' : originOf(site.domain)] });
   } catch {}
   await refreshAccess();
   render();
@@ -87,6 +107,7 @@ function save(delay = 60) {
 
 function change(fn, delay) {
   fn();
+  dropDefaultCustom();
   render();
   save(delay);
   clearTimeout(statusTimer);
@@ -197,29 +218,20 @@ function build() {
       { timeout: 15000, maximumAge: 3600000 },
     );
   });
-  // Interrupteur du site. Là où un domaine peut être partagé, 3 crans : OFF · Site (cette adresse seule) ·
-  // Domaine (le domaine et tous ses sous-sites, mêmes réglages). Un clic avance d'un cran ; un clic sur un
-  // cran précis y va directement.
+  // Interrupteur du site, 3 crans : OFF · ON · Toujours (sombre même quand le mode Auto rendrait la page claire).
+  // Un clic avance d'un cran ; un clic sur un cran précis y va directement.
   $('#siteToggle').addEventListener('click', (e) => {
     if (!site) return;
-    const three = !!DG.domainOf(site);
     const now = siteLevel();
-    let next = three ? (now + 1) % 3 : now ? 0 : 1;
-    if (three && e.detail) { // vrai clic de souris : le cran visé
+    let next = (now + 1) % 3;
+    if (e.detail) { // vrai clic de souris : le cran visé
       const box = e.currentTarget.getBoundingClientRect();
       const aimed = Math.min(2, Math.floor(((e.clientX - box.left) / box.width) * 3));
       if (aimed !== now) next = aimed;
     }
-    // Autorisations demandées pendant le clic (geste utilisateur) : le site, ou tout le domaine.
-    if (site.other && next && !access.all) {
-      if (next === 2) chrome.permissions.request({ origins: [originOf(site.domain)] }).catch(() => {});
-      else if (!access.site) askAccess(false);
-    }
-    change(() => {
-      if (!next) return DG.setSiteOn(state, site, false);
-      if ((next === 2) !== DG.isDomainWide(state, site)) DG.setDomainWide(state, site, next === 2);
-      DG.setSiteOn(state, site, true);
-    }, 0);
+    // Autorisation demandée pendant le clic (geste utilisateur) : tout le domaine.
+    if (site.other && next && !access.all && !access.site) askAccess(false);
+    change(() => DG.setSiteLevel(state, site, next), 0);
     if (site.other) injectHere();
   });
   $('#permSite').addEventListener('click', () => askAccess(false));
@@ -247,15 +259,16 @@ function build() {
   });
   $('#rulesClear').addEventListener('click', () => change(() => (here().rules = []), 0));
 
-  // Personnaliser : ce site garde ses propres réglages, que les réglages généraux ne touchent plus.
+  // « Ne plus personnaliser ? » (au survol de la fiche) : le site revient aux réglages par défaut.
   $('#customBtn').addEventListener('click', () => {
-    if (!site) return;
-    change(() => {
-      here().custom = here().custom ? null : { ...state.global };
-      if (here().custom) DG.setSiteOn(state, site, true); // personnaliser un site, c'est aussi l'allumer (Par site)
-    }, 0);
+    if (!site || !DG.conf(state, site).custom) return;
+    change(() => (here().custom = null), 0);
   });
-  $('#reset').addEventListener('click', () => change(() => Object.assign(params(), DG.DEFAULT_PARAMS), 0));
+  // Réinitialiser : sur un site, il revient aux réglages par défaut ; hors site, les réglages par défaut d'origine.
+  $('#reset').addEventListener('click', () => change(() => {
+    if (site) here().custom = null;
+    else Object.assign(state.global, DG.DEFAULT_PARAMS);
+  }, 0));
 
   const presets = $('#presets');
   for (const preset of DG.PRESETS) {
@@ -280,16 +293,17 @@ function build() {
       // Un clic sur le thème déjà choisi passe à la variante suivante. Thème et variante s'appliquent aux réglages
       // en cours : ceux du site s'il est personnalisé, sinon ceux de tous les sites.
       if (sameValues(preset.values, params())) {
-        params().variant = ((params().variant || 0) + 1) % DG.VARIANTS.length;
+        const p = edit();
+        p.variant = ((p.variant || 0) + 1) % DG.VARIANTS.length;
       } else {
-        Object.assign(params(), preset.values);
+        Object.assign(edit(), preset.values);
       }
     }, 0));
     presets.appendChild(btn);
   }
 
   for (const btn of $$('#imageMode button')) {
-    btn.addEventListener('click', () => change(() => (params().imageMode = btn.dataset.mode), 0));
+    btn.addEventListener('click', () => change(() => (edit().imageMode = btn.dataset.mode), 0));
   }
 
   const sliders = $('#sliders');
@@ -306,7 +320,7 @@ function build() {
       <button type="button" class="step" data-dir="1" aria-label="${s.title || s.label} : plus">+</button>
       <output></output>`;
     const input = wrap.querySelector('input');
-    const set = (v) => (params()[s.key] = Math.min(s.max, Math.max(s.min, v)));
+    const set = (v) => (edit()[s.key] = Math.min(s.max, Math.max(s.min, v)));
     input.addEventListener('input', () => change(() => set(Number(input.value))));
     input.addEventListener('dblclick', () => change(() => set(DG.DEFAULT_PARAMS[s.key]), 0));
     for (const step of wrap.querySelectorAll('.step')) {
@@ -318,7 +332,7 @@ function build() {
       const row = document.createElement('label');
       row.className = 'check sub-check';
       row.innerHTML = '<input type="checkbox" id="tempSkipImages"> Ne pas teinter les images';
-      row.querySelector('input').addEventListener('change', (e) => change(() => (params().tempSkipImages = e.target.checked), 0));
+      row.querySelector('input').addEventListener('change', (e) => change(() => (edit().tempSkipImages = e.target.checked), 0));
       $('.colors').appendChild(row); // sur la ligne Fond / Texte, à droite
     }
   }
@@ -334,7 +348,7 @@ function build() {
   sliders.insertBefore($('#imageField'), sliders.querySelector('[data-key="images"]'));
 
   for (const key of ['bg', 'fg']) {
-    $('#' + key).addEventListener('input', (e) => change(() => (params()[key] = e.target.value)));
+    $('#' + key).addEventListener('input', (e) => change(() => (edit()[key] = e.target.value)));
   }
 
   const setAll = (on) => change(() => DG.SITES.forEach((s) => DG.setSiteOn(state, s, on)), 0);
@@ -401,49 +415,42 @@ function render() {
   toggle.disabled = !site;
   const here0 = !!site && DG.siteOn(state, site);
   const level = siteLevel();
-  const domainName = site && DG.domainOf(site);
   toggle.classList.toggle('on', here0);
-  toggle.classList.toggle('three', !!domainName);
+  toggle.classList.add('three');
   toggle.classList.toggle('lvl1', level === 1);
   toggle.classList.toggle('lvl2', level === 2);
   toggle.setAttribute('aria-checked', String(here0));
-  $('#siteLevel').hidden = !domainName;
-  $('#siteLevel').textContent = ['OFF', 'Site', 'Domaine'][level];
-  // Cran Domaine : l'adresse devient « *.caf.fr » (le joker estompé) : c'est tout le domaine qui suit.
-  const nameEl = $('#siteName');
-  nameEl.textContent = site ? site.label : 'Page non gérée';
-  if (level === 2 && site?.other) {
-    const star = document.createElement('span');
-    star.className = 'sub';
-    star.textContent = '*.';
-    nameEl.replaceChildren(star, site.domain);
-  }
-  nameEl.title = host;
+  $('#siteLevel').hidden = !site;
+  $('#siteLevel').textContent = ['OFF', 'ON', 'Toujours ON'][level];
+  $('#siteName').textContent = site ? siteName(site) : 'Page non gérée';
+  $('#siteName').title = host;
   $('#siteHost').textContent = !site ? host || '—'
-    : s?.custom ? 'Thème personnalisé' : here0 ? 'Thème sombre activé' : 'Toujours désactivé ici';
-  $('#siteHost').classList.toggle('own', !!s?.custom);
-  $('#customAsk').textContent = !site ? '' : s.custom ? 'Ne plus personnaliser ?' : `Personnaliser ${site.label} ?`;
-  $('#customBtn').disabled = !site;
-  $('#customBtn').title = !site ? '' : s.custom
-    ? 'Revenir aux réglages communs à tous les sites'
-    : 'Donner à ce site ses propres réglages : il ne suit plus les réglages généraux';
-  $('#pickBtn').hidden = !s?.custom; // le sélecteur d'élément fait partie de « Personnaliser »
+    : s?.custom ? 'Thème personnalisé' : level === 2 ? 'Toujours ON' : here0 ? 'Thème sombre activé' : 'Toujours désactivé ici';
+  $('#siteHost').classList.toggle('own', !!s?.custom || level === 2); // « Toujours ON » compte comme personnalisé
+  // Personnaliser se fait en changeant un réglage ; la fiche ne propose que d'y renoncer.
+  $('#customAsk').textContent = s?.custom ? 'Ne plus personnaliser ?' : '';
+  $('#customBtn').disabled = !s?.custom;
+  $('#customBtn').title = s?.custom ? 'Revenir aux réglages par défaut' : '';
+  $('#pickBtn').hidden = !site;
   const nRules = s?.rules?.length || 0;
-  $('#siteTools').hidden = !site || (!s?.custom && !nRules);
+  $('#siteTools').hidden = !site;
   $('#rulesInfo').textContent = nRules ? `${nRules} règle${nRules > 1 ? 's' : ''}` : '';
   $('#rulesInfo').title = nRules ? `${nRules} élément(s) de cette page avec un aspect choisi` : '';
   $('#rulesClear').hidden = !nRules;
   document.body.classList.toggle('own', !!s?.custom); // en OFF, un site personnalisé reste actif : pas grisé
   $('#customBtn').setAttribute('aria-pressed', String(!!s?.custom));
   toggle.title = !site ? ''
-    : domainName ? `OFF · Site (${site.label} seul) · Domaine (${site.group ? `${domainName} : Docs, Sheets, Slides et Forms` : `tout ${domainName}, sous-domaines compris`}). Clic : cran suivant`
-      : `Activer ou désactiver sur ${site.label} (mémorisé)`;
+    : `OFF · ON · Toujours ON (sombre même quand le mode Auto rendrait ${siteName(site)} clair). Clic : cran suivant`;
 
   // Onglet Réglages
   const isWiki = site?.id === 'wikipedia';
   const p = params();
-  $('#scopeLabel').textContent = s?.custom ? `Réglages propres à ${site.label}` : 'Réglages communs à tous les sites';
+  // Par défaut : « Réglages par défaut », rien à réinitialiser. Modifiés : le nom du domaine, puis « Réinitialiser ».
+  const modified = site ? !!s?.custom
+    : Object.keys(DG.DEFAULT_PARAMS).some((k) => String(state.global[k]).toLowerCase() !== String(DG.DEFAULT_PARAMS[k]).toLowerCase());
+  $('#scopeLabel').textContent = s?.custom ? siteName(site) : 'Réglages par défaut';
   $('#scopeLabel').classList.toggle('own', !!s?.custom);
+  $('#reset').hidden = !modified;
   $('#nativeNote').hidden = !(isWiki && state.wikiMode === 'native');
   for (const btn of $$('#imageMode button')) btn.classList.toggle('on', btn.dataset.mode === p.imageMode);
   for (const def of SLIDERS) {
@@ -466,7 +473,7 @@ function render() {
     const vInfo = DG.VARIANTS[variant];
     btn.title = selected
       ? `${preset.label} · ${vInfo.name} (${variant + 1}/${DG.VARIANTS.length}) : ${vInfo.hint}. Clic pour la variante suivante` +
-        (isCustom() ? ' (ce site seulement).' : ' (tous les sites non personnalisés).')
+        (isCustom() ? ' (ce site).' : ' (ce site passe en personnalisé).')
       : preset.label;
   }
 
@@ -517,10 +524,10 @@ function render() {
   for (const name of names) {
     const conf = state.hosts[name];
     const li = document.createElement('li');
-    if (site?.host === name) li.className = 'current';
+    if (site?.domain === name) li.className = 'current';
     const label = document.createElement('span');
     label.className = 'name';
-    label.textContent = conf.wholeDomain ? `${name} (tout le domaine)` : name;
+    label.textContent = name;
     const sw = document.createElement('label');
     sw.className = 'switch';
     sw.innerHTML = '<input type="checkbox"><span></span>';

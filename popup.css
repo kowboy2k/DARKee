@@ -74,7 +74,7 @@ body.off .status, body.off #autoPanel, body.off .site-card, body.off .panel, bod
 .default-btn svg .fill { fill: #fdd663; stroke: none; }
 .default-btn svg .spark { stroke: #fdd663; }
 
-.default-btn:not(.on) svg .fill { fill: currentColor; }
+.default-btn:not(.on) svg .fill { fill: #8ab4f8; } /* Inactif par défaut : croissant bleuté, comme sur l'icône */
 .default-btn:not(.on) svg .spark { stroke: currentColor; }
 .top-cell:has(.on) .top-cap { color: var(--accent); }
 /* Auto : bouton double, la flèche accolée déplie ou replie le détail */
@@ -243,7 +243,7 @@ body.off .status, body.off #autoPanel, body.off .site-card, body.off .panel, bod
   background: var(--accent); transition: width .15s;
 }
 .moon-switch.three.lvl1::before { width: 50px; background: #5b75cc; }
-.moon-switch.three.lvl2::before { width: 100%; background: #8ab4f9; }
+.moon-switch.three.lvl2::before { width: 100%; background: var(--own); } /* Toujours ON : jaune, comme ce qui est personnalisé */
 .moon-switch.three .knob { transform: none; }
 .moon-switch.three.lvl1 .knob { transform: translateX(22px); }
 .moon-switch.three.lvl2 .knob { transform: translateX(44px); }
@@ -355,7 +355,8 @@ body.off:not(.own) .panel, body.off:not(.own) .site-toggle { opacity: .5; }
 
 .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .scope { margin-bottom: 2px; }
-.scope-label { color: var(--muted); font-size: 12px; margin-right: auto; }
+.scope-label { color: var(--muted); font-size: 12px; margin-right: auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#reset { flex: none; white-space: nowrap; }
 .scope-label.own { color: var(--own); font-weight: 600; }
 .field { margin-top: 9px; }
 .field-label, h2 {
