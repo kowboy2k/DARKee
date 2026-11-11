@@ -29,6 +29,7 @@ Ne pas garder en parallèle « gmail-titlebar-sombre » ni d'autres extensions d
   Option « Laisser tel quel si le site est déjà sombre » par site (cochée par défaut).
 
 ## Versions
+- **1.20.10** – Raccourci « Ce site » en mode Auto : il bascule ce qu'on voit. Page encore claire parce qu'Auto n'est pas en sombre (journée, OS clair) → « Toujours ON » ; page sombre → retour à ON si Auto la rend claire, sinon OFF.
 - **1.20.9** – Chargée depuis un dossier (non empaquetée), l'extension se recharge d'elle-même quand une nouvelle version arrive sur le disque (synchro PC ↔ Mac) ; permission `alarms` pour ce contrôle toutes les 30 s.
 - **1.20.8** – « Inactif par défaut » : croissant bleuté sur le bouton.
 - **1.20.7** – Interrupteur « Toujours ON » : sans étoile (piste jaune seule).

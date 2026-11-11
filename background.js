@@ -61,6 +61,18 @@ async function injectNow(tabId) {
   } catch {}
 }
 
+// Thème de l'OS, lu dans l'onglet (le service n'a pas matchMedia). Illisible (page système) : clair.
+async function systemDarkIn(tabId) {
+  try {
+    const [r] = await chrome.scripting.executeScript({
+      target: { tabId }, func: () => matchMedia('(prefers-color-scheme: dark)').matches,
+    });
+    return r?.result === true;
+  } catch {
+    return false;
+  }
+}
+
 chrome.commands.onCommand.addListener(async (command, tab) => {
   const { state: raw } = await chrome.storage.local.get('state');
   const state = DG.normalize(raw);
@@ -70,7 +82,17 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
     tab ||= (await chrome.tabs.query({ active: true, lastFocusedWindow: true }))[0];
     const site = tab?.url && DG.siteForUrl(tab.url);
     if (!site) return;
-    DG.setSiteOn(state, site, !DG.siteOn(state, site));
+    if (state.mode === 'auto') {
+      // Auto : le raccourci bascule ce qu'on voit. Page claire parce qu'Auto n'est pas encore en sombre (journée,
+      // OS clair) → « Toujours ON » ; page sombre → retour à ON si Auto la rend claire, sinon OFF.
+      const autoDark = (state.autoBy.system && await systemDarkIn(tab.id))
+        || (state.autoBy.schedule && DG.isNight(state.schedule));
+      const level = DG.siteLevel(state, site);
+      const dark = level === 2 || (level === 1 && autoDark);
+      DG.setSiteLevel(state, site, dark ? (level === 2 && !autoDark ? 1 : 0) : (autoDark ? 1 : 2));
+    } else {
+      DG.setSiteOn(state, site, !DG.siteOn(state, site));
+    }
     if (site.other) await injectNow(tab.id);
   }
   await chrome.storage.local.set({ state });
